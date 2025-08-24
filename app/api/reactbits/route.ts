@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 
-export const runtime = "edge";
+// Remove edge runtime for compatibility with dynamic imports and Vercel deployment
+// export const runtime = "edge";
 
 // Component templates and patterns
 const COMPONENT_TEMPLATES = {
