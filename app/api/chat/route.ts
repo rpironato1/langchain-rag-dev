@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 
-import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
+import { createChatModel, parseProviderConfig } from "@/lib/llm-providers";
 
-export const runtime = "edge";
+// Remove edge runtime for compatibility with dynamic imports
+// export const runtime = "edge";
 
 const formatMessage = (message: VercelChatMessage) => {
   return `${message.role}: ${message.content}`;
@@ -33,18 +34,13 @@ export async function POST(req: NextRequest) {
     const currentMessageContent = messages[messages.length - 1].content;
     const prompt = PromptTemplate.fromTemplate(TEMPLATE);
 
-    /**
-     * You can also try e.g.:
-     *
-     * import { ChatAnthropic } from "@langchain/anthropic";
-     * const model = new ChatAnthropic({});
-     *
-     * See a full list of supported models at:
-     * https://js.langchain.com/docs/modules/model_io/models/
-     */
-    const model = new ChatOpenAI({
+    // Parse provider configuration from request or use defaults
+    const providerConfig = parseProviderConfig(body);
+    
+    // Create chat model using the multi-provider abstraction
+    const model = await createChatModel({
+      ...providerConfig,
       temperature: 0.8,
-      model: "gpt-4o-mini",
     });
 
     /**

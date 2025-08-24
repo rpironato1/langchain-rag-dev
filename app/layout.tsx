@@ -70,6 +70,7 @@ export default function RootLayout({
                 </a>
                 <nav className="flex gap-1 flex-col md:flex-row md:flex-wrap">
                   <ActiveLink href="/dashboard">🏠 Dashboard</ActiveLink>
+                  <ActiveLink href="/llm-providers">🤖 LLM Providers</ActiveLink>
                   <ActiveLink href="/project-planning">🎯 Project Planning</ActiveLink>
                   <ActiveLink href="/nextjs-dev">⚛️ Next.js Dev</ActiveLink>
                   <ActiveLink href="/reactbits">✨ ReactBits</ActiveLink>
