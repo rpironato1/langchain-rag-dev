@@ -30,6 +30,32 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const messages = body.messages ?? [];
+    
+    // Validate messages format
+    if (!Array.isArray(messages)) {
+      return NextResponse.json(
+        { error: "Messages must be an array" },
+        { status: 500 }
+      );
+    }
+    
+    if (messages.length === 0) {
+      return NextResponse.json(
+        { error: "Messages array cannot be empty" },
+        { status: 500 }
+      );
+    }
+    
+    // Validate message structure
+    for (const message of messages) {
+      if (!message.role || !message.content) {
+        return NextResponse.json(
+          { error: "Each message must have 'role' and 'content' properties" },
+          { status: 500 }
+        );
+      }
+    }
+    
     const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
     const currentMessageContent = messages[messages.length - 1].content;
     const prompt = PromptTemplate.fromTemplate(TEMPLATE);

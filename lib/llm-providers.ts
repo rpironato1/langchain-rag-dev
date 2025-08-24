@@ -233,13 +233,21 @@ export function parseProviderConfig(request?: any): LLMConfig {
   const requestProvider = request?.provider as LLMProvider;
   const requestModel = request?.model as string;
   
-  // Default to OpenAI if no provider specified or invalid provider
+  // Default to OpenAI if no provider specified
   let provider: LLMProvider = 'openai';
-  if (requestProvider && requestProvider in PROVIDER_CONFIGS) {
+  if (requestProvider) {
+    if (!(requestProvider in PROVIDER_CONFIGS)) {
+      throw new Error(`Unsupported provider: ${requestProvider}`);
+    }
     provider = requestProvider;
   }
   
   const providerConfig = PROVIDER_CONFIGS[provider];
+  
+  // Validate model if specified
+  if (requestModel && !providerConfig.models.includes(requestModel)) {
+    throw new Error(`Model ${requestModel} not supported by provider ${provider}`);
+  }
   
   return {
     provider,
