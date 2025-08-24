@@ -22,7 +22,17 @@
     "test:llm": "playwright test tests/llm",
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
-    "test:install": "playwright install"
+    "test:install": "playwright install",
+    "test:autonomous": "./run-autonomous-tests.sh",
+    "test:autonomous-suite": "playwright test tests/autonomous/mcp-autonomous-suite.spec.ts",
+    "test:wcag": "playwright test tests/autonomous/mcp-autonomous-suite.spec.ts --project=accessibility-testing",
+    "test:multi-device": "playwright test tests/autonomous/mcp-autonomous-suite.spec.ts --project=chromium-desktop --project=firefox-desktop --project=tablet-landscape --project=mobile-android",
+    "test:performance": "playwright test tests/autonomous/mcp-autonomous-suite.spec.ts --project=chromium-desktop --trace=on",
+    "test:visual": "playwright test tests/autonomous/mcp-autonomous-suite.spec.ts --update-snapshots",
+    "test:coverage": "playwright test --coverage",
+    "test:parallel": "playwright test --workers=4",
+    "test:ci": "playwright test --reporter=github",
+    "validate:autonomous": "./validate-autonomous-tests.sh"
   },
   "engines": {
     "node": ">=18"
