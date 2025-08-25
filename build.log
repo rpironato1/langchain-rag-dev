@@ -1,0 +1,69 @@
+
+> langchain-nextjs-template@0.0.0 build
+> next build
+
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+   ▲ Next.js 15.2.4
+
+   Creating an optimized production build ...
+ ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+   Generating static pages (0/26) ...
+   Generating static pages (6/26) 
+   Generating static pages (12/26) 
+   Generating static pages (19/26) 
+ ✓ Generating static pages (26/26)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      166 B         101 kB
+├ ○ /_not-found                            977 B         101 kB
+├ ○ /agents                                201 B         163 kB
+├ ○ /ai_sdk                                174 B         104 kB
+├ ○ /ai_sdk/agent                           1 kB         110 kB
+├ ○ /ai_sdk/tools                        1.95 kB         115 kB
+├ ƒ /api/chat                              166 B         101 kB
+├ ƒ /api/chat/agents                       166 B         101 kB
+├ ƒ /api/chat/nextjs-dev                   166 B         101 kB
+├ ƒ /api/chat/project-planning             166 B         101 kB
+├ ƒ /api/chat/retrieval                    166 B         101 kB
+├ ƒ /api/chat/retrieval_agents             166 B         101 kB
+├ ƒ /api/chat/structured_output            166 B         101 kB
+├ ƒ /api/llm/providers                     166 B         101 kB
+├ ƒ /api/mcp                               166 B         101 kB
+├ ƒ /api/reactbits                         166 B         101 kB
+├ ƒ /api/retrieval/ingest                  166 B         101 kB
+├ ƒ /api/terminal                          166 B         101 kB
+├ ○ /chat                                  201 B         163 kB
+├ ○ /dashboard                             174 B         104 kB
+├ ○ /langgraph                             86 kB         249 kB
+├ ○ /llm-providers                       28.4 kB         159 kB
+├ ○ /mcp-tools                            4.7 kB         121 kB
+├ ○ /nextjs-dev                            201 B         163 kB
+├ ○ /project-planning                      201 B         163 kB
+├ ○ /reactbits                           4.72 kB         121 kB
+├ ○ /retrieval                             201 B         163 kB
+├ ○ /retrieval_agents                      201 B         163 kB
+├ ○ /structured_output                     201 B         163 kB
+└ ○ /terminal                            4.09 kB         111 kB
++ First Load JS shared by all             100 kB
+  ├ chunks/4bd1b696-633dfd189449dc42.js  53.2 kB
+  ├ chunks/684-ad20369715e77b80.js       45.2 kB
+  └ other shared chunks (total)           1.9 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

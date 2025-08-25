@@ -1,0 +1,14 @@
+{
+  "test": true,
+  "message": "Hello from MCP test fixture",
+  "data": {
+    "numbers": [1, 2, 3, 4, 5],
+    "strings": ["hello", "world", "test"],
+    "nested": {
+      "level": 2,
+      "value": "nested content"
+    }
+  },
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "unicode": "🚀 Testing Unicode: àáâãäåæçèéêë 中文 العربية"
+}

@@ -13,7 +13,8 @@ import {
   StringOutputParser,
 } from "@langchain/core/output_parsers";
 
-export const runtime = "edge";
+// Remove edge runtime for compatibility with dynamic imports and Vercel deployment
+// export const runtime = "edge";
 
 const combineDocumentsFn = (docs: Document[]) => {
   const serializedDocs = docs.map((doc) => doc.pageContent);

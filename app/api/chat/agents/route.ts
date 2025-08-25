@@ -13,7 +13,8 @@ import {
   SystemMessage,
 } from "@langchain/core/messages";
 
-export const runtime = "edge";
+// Remove edge runtime for compatibility with dynamic imports and Vercel deployment
+// export const runtime = "edge";
 
 const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
   if (message.role === "user") {

@@ -1,0 +1,8 @@
+This is a sample text file for testing MCP file operations.
+It contains multiple lines to test reading capabilities.
+
+Line 3 with some special characters: àáâãäåæçèéêë
+Line 4 with numbers: 1234567890
+Line 5 with symbols: !@#$%^&*()_+-=[]{}|;:,.<>?
+
+End of sample file.

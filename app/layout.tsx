@@ -1,12 +1,9 @@
 import "./globals.css";
-import { Public_Sans } from "next/font/google";
 import { ActiveLink } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { GithubIcon } from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-
-const publicSans = Public_Sans({ subsets: ["latin"] });
 
 const Logo = () => (
   <svg
@@ -38,27 +35,27 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>LangChain + Next.js Template</title>
+        <title>LangChain Development Platform</title>
         <link rel="shortcut icon" href="/images/favicon.ico" />
         <meta
           name="description"
-          content="Starter template showing how to use LangChain in Next.js projects. See source code and deploy your own at https://github.com/langchain-ai/langchain-nextjs-template!"
+          content="Comprehensive AI-powered development platform with project planning, Next.js development assistance, terminal access, and advanced tooling integration."
         />
-        <meta property="og:title" content="LangChain + Next.js Template" />
+        <meta property="og:title" content="LangChain Development Platform" />
         <meta
           property="og:description"
-          content="Starter template showing how to use LangChain in Next.js projects. See source code and deploy your own at https://github.com/langchain-ai/langchain-nextjs-template!"
+          content="Comprehensive AI-powered development platform with project planning, Next.js development assistance, terminal access, and advanced tooling integration."
         />
         <meta property="og:image" content="/images/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="LangChain + Next.js Template" />
+        <meta name="twitter:title" content="LangChain Development Platform" />
         <meta
           name="twitter:description"
-          content="Starter template showing how to use LangChain in Next.js projects. See source code and deploy your own at https://github.com/langchain-ai/langchain-nextjs-template!"
+          content="Comprehensive AI-powered development platform with project planning, Next.js development assistance, terminal access, and advanced tooling integration."
         />
         <meta name="twitter:image" content="/images/og-image.png" />
       </head>
-      <body className={publicSans.className}>
+      <body className="font-sans">
         <NuqsAdapter>
           <div className="bg-secondary grid grid-rows-[auto,1fr] h-[100dvh]">
             <div className="grid grid-cols-[1fr,auto] gap-2 p-4">
@@ -71,20 +68,18 @@ export default function RootLayout({
                 >
                   <Logo />
                 </a>
-                <nav className="flex gap-1 flex-col md:flex-row">
-                  <ActiveLink href="/">🏴‍☠️ Chat</ActiveLink>
-                  <ActiveLink href="/structured_output">
-                    🧱 Structured Output
-                  </ActiveLink>
+                <nav className="flex gap-1 flex-col md:flex-row md:flex-wrap">
+                  <ActiveLink href="/dashboard">🏠 Dashboard</ActiveLink>
+                  <ActiveLink href="/llm-providers">🤖 LLM Providers</ActiveLink>
+                  <ActiveLink href="/project-planning">🎯 Project Planning</ActiveLink>
+                  <ActiveLink href="/nextjs-dev">⚛️ Next.js Dev</ActiveLink>
+                  <ActiveLink href="/reactbits">✨ ReactBits</ActiveLink>
+                  <ActiveLink href="/terminal">💻 Terminal</ActiveLink>
+                  <ActiveLink href="/mcp-tools">🛠️ MCP Tools</ActiveLink>
+                  <ActiveLink href="/retrieval">🐶 RAG</ActiveLink>
+                  <ActiveLink href="/chat">🏴‍☠️ Chat</ActiveLink>
                   <ActiveLink href="/agents">🦜 Agents</ActiveLink>
-                  <ActiveLink href="/retrieval">🐶 Retrieval</ActiveLink>
-                  <ActiveLink href="/retrieval_agents">
-                    🤖 Retrieval Agents
-                  </ActiveLink>
-                  <ActiveLink href="/ai_sdk">
-                    🌊 React Server Components
-                  </ActiveLink>
-                  <ActiveLink href="/langgraph">🕸️ LangGraph</ActiveLink>
+                  <ActiveLink href="/structured_output">🧱 Structured</ActiveLink>
                 </nav>
               </div>
 

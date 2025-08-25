@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Message as VercelChatMessage, StreamingTextResponse } from "ai";
 
-import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { HttpResponseOutputParser } from "langchain/output_parsers";
+import { createChatModel, parseProviderConfig } from "@/lib/llm-providers";
 
-export const runtime = "edge";
+// Remove edge runtime for compatibility with dynamic imports
+// export const runtime = "edge";
 
 const formatMessage = (message: VercelChatMessage) => {
   return `${message.role}: ${message.content}`;
@@ -29,22 +30,43 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const messages = body.messages ?? [];
+    
+    // Validate messages format
+    if (!Array.isArray(messages)) {
+      return NextResponse.json(
+        { error: "Messages must be an array" },
+        { status: 500 }
+      );
+    }
+    
+    if (messages.length === 0) {
+      return NextResponse.json(
+        { error: "Messages array cannot be empty" },
+        { status: 500 }
+      );
+    }
+    
+    // Validate message structure
+    for (const message of messages) {
+      if (!message.role || !message.content) {
+        return NextResponse.json(
+          { error: "Each message must have 'role' and 'content' properties" },
+          { status: 500 }
+        );
+      }
+    }
+    
     const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
     const currentMessageContent = messages[messages.length - 1].content;
     const prompt = PromptTemplate.fromTemplate(TEMPLATE);
 
-    /**
-     * You can also try e.g.:
-     *
-     * import { ChatAnthropic } from "@langchain/anthropic";
-     * const model = new ChatAnthropic({});
-     *
-     * See a full list of supported models at:
-     * https://js.langchain.com/docs/modules/model_io/models/
-     */
-    const model = new ChatOpenAI({
+    // Parse provider configuration from request or use defaults
+    const providerConfig = parseProviderConfig(body);
+    
+    // Create chat model using the multi-provider abstraction
+    const model = await createChatModel({
+      ...providerConfig,
       temperature: 0.8,
-      model: "gpt-4o-mini",
     });
 
     /**

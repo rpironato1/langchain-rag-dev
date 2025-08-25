@@ -58,7 +58,7 @@ export async function executeTool(
                 function: {
                   name: "get_weather",
                   description: Weather.description,
-                  parameters: zodToJsonSchema(Weather),
+                  parameters: zodToJsonSchema(Weather as any, { target: "openApi3" }),
                 },
               },
             ],
@@ -67,7 +67,7 @@ export async function executeTool(
         .pipe(
           new JsonOutputKeyToolsParser<z.infer<typeof Weather>>({
             keyName: "get_weather",
-            zodSchema: Weather,
+            zodSchema: Weather as any,
           }),
         );
     }
