@@ -32,6 +32,7 @@
     "test:coverage": "playwright test --coverage",
     "test:parallel": "playwright test --workers=4",
     "test:ci": "playwright test --reporter=github",
+    "test:rag-mcp": "node validate-rag-mcp-integration.js",
     "validate:autonomous": "./validate-autonomous-tests.sh"
   },
   "engines": {
