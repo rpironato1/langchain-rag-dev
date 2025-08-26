@@ -10,6 +10,15 @@ run-tests.sh
 validate-tests.sh
 playwright.config.ts
 
+# Storybook files (should not be in production build)
+*.stories.*
+**/*.stories.*
+.storybook/
+.storybook/**/*
+stories/
+stories/**/*
+storybook-static/
+
 # Development files
 .env.local
 .env.development

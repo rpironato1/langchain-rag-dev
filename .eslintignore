@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+*.stories.tsx
+*.stories.ts
+*.stories.js
+*.stories.jsx
+stories/
+.storybook/
+storybook-static/

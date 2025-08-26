@@ -56,13 +56,16 @@ export const PROVIDER_CONFIGS: Record<LLMProvider, ProviderConfig> = {
   },
   openrouter: {
     models: [
+      'qwen/qwen3-235b-a22b:free',
+      'qwen/qwen3-coder:free', 
+      'openai/gpt-oss-20b:free',
       'meta-llama/llama-3.2-90b-vision-instruct',
       'anthropic/claude-3.5-sonnet',
       'openai/gpt-4o-mini',
       'google/gemini-2.0-flash-exp',
       'qwen/qwen-2.5-72b-instruct'
     ],
-    defaultModel: 'openai/gpt-4o-mini',
+    defaultModel: 'qwen/qwen3-235b-a22b:free',
     requiresApiKey: true,
     supportsStreaming: true,
     baseURL: 'https://openrouter.ai/api/v1',

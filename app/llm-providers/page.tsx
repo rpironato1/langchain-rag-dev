@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle, Loader2, Settings, Bot } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Settings, Bot, Key, Eye, EyeOff } from "lucide-react";
 import { useChat } from "ai/react";
+import { toast } from "sonner";
 
 interface Provider {
   provider: string;
@@ -30,6 +31,9 @@ export default function MultiProviderChat() {
   const [temperature, setTemperature] = useState<number>(0.7);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [showApiKeyConfig, setShowApiKeyConfig] = useState(false);
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
     api: '/api/chat',
@@ -42,7 +46,31 @@ export default function MultiProviderChat() {
 
   useEffect(() => {
     fetchProviders();
+    loadApiKeysFromStorage();
   }, []);
+
+  const loadApiKeysFromStorage = () => {
+    const stored = localStorage.getItem('llm-api-keys');
+    if (stored) {
+      try {
+        setApiKeys(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse stored API keys');
+      }
+    }
+  };
+
+  const saveApiKey = (provider: string, key: string) => {
+    const newApiKeys = { ...apiKeys, [provider]: key };
+    setApiKeys(newApiKeys);
+    localStorage.setItem('llm-api-keys', JSON.stringify(newApiKeys));
+    
+    toast.success(`${provider.charAt(0).toUpperCase() + provider.slice(1)} API key has been configured.`);
+  };
+
+  const toggleKeyVisibility = (provider: string) => {
+    setShowKeys(prev => ({ ...prev, [provider]: !prev[provider] }));
+  };
 
   const fetchProviders = async () => {
     try {
@@ -208,6 +236,80 @@ export default function MultiProviderChat() {
                 ))}
               </div>
             </CardContent>
+          </Card>
+
+          {/* API Key Configuration */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Key className="h-5 w-5 mr-2" />
+                  API Key Configuration
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowApiKeyConfig(!showApiKeyConfig)}
+                >
+                  {showApiKeyConfig ? "Hide" : "Configure"}
+                </Button>
+              </CardTitle>
+              <CardDescription>
+                Configure API keys for different LLM providers
+              </CardDescription>
+            </CardHeader>
+            {showApiKeyConfig && (
+              <CardContent className="space-y-4">
+                {providers
+                  .filter(p => p.config.requiresApiKey)
+                  .map((provider) => (
+                    <div key={provider.provider} className="space-y-2">
+                      <Label htmlFor={`api-key-${provider.provider}`}>
+                        {provider.provider.charAt(0).toUpperCase() + provider.provider.slice(1)} API Key
+                      </Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          id={`api-key-${provider.provider}`}
+                          type={showKeys[provider.provider] ? "text" : "password"}
+                          placeholder={`Enter your ${provider.provider} API key`}
+                          value={apiKeys[provider.provider] || ""}
+                          onChange={(e) => setApiKeys(prev => ({ ...prev, [provider.provider]: e.target.value }))}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleKeyVisibility(provider.provider)}
+                        >
+                          {showKeys[provider.provider] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => saveApiKey(provider.provider, apiKeys[provider.provider] || "")}
+                          disabled={!apiKeys[provider.provider]?.trim()}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {provider.provider === 'openai' && 'Get your key from platform.openai.com'}
+                        {provider.provider === 'anthropic' && 'Get your key from console.anthropic.com'}
+                        {provider.provider === 'gemini' && 'Get your key from makersuite.google.com'}
+                        {provider.provider === 'openrouter' && 'Get your key from openrouter.ai'}
+                      </p>
+                    </div>
+                  ))}
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-center">
+                    <AlertCircle className="h-5 w-5 text-amber-500 mr-2" />
+                    <span className="text-sm text-amber-700">
+                      API keys are stored locally in your browser and are not sent to our servers.
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            )}
           </Card>
         </div>
 
