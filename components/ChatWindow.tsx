@@ -2,7 +2,7 @@
 
 import { type Message } from "ai";
 import { useChat } from "ai/react";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { toast } from "sonner";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -12,7 +12,16 @@ import { IntermediateStep } from "./IntermediateStep";
 import { Button } from "./ui/button";
 import { ArrowDown, LoaderCircle, Paperclip } from "lucide-react";
 import { Checkbox } from "./ui/checkbox";
-import { UploadDocumentsForm } from "./UploadDocumentsForm";
+import { cn } from "@/utils/cn";
+
+// Lazy load heavy components
+const LazyUploadDocumentsForm = lazy(() => 
+  import("./UploadDocumentsForm").then(mod => ({ 
+    default: mod.UploadDocumentsForm 
+  }))
+);
+
+// Import Dialog normally but use lazy loading for form
 import {
   Dialog,
   DialogContent,
@@ -21,7 +30,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { cn } from "@/utils/cn";
+
+// Loading component for upload form
+const UploadFormLoader = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="flex flex-col items-center space-y-4">
+      <LoaderCircle className="h-6 w-6 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading upload form...</p>
+    </div>
+  </div>
+);
 
 function ChatMessages(props: {
   messages: Message[];
@@ -330,7 +348,9 @@ export function ChatWindow(props: {
                     Upload a document to use for the chat.
                   </DialogDescription>
                 </DialogHeader>
-                <UploadDocumentsForm />
+                <Suspense fallback={<UploadFormLoader />}>
+                  <LazyUploadDocumentsForm />
+                </Suspense>
               </DialogContent>
             </Dialog>
           )}

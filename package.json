@@ -34,10 +34,14 @@
     "test:ci": "playwright test --reporter=github",
     "test:rag-mcp": "node validate-rag-mcp-integration.js",
     "validate:autonomous": "./validate-autonomous-tests.sh",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "storybook": "storybook dev -p 6006 --quiet",
+    "storybook:lazy": "storybook dev -p 6006 --quiet --no-open --lazy-compilation",
+    "build-storybook": "storybook build --quiet",
+    "build-storybook:lazy": "storybook build --quiet --webpack-stats-json",
     "test:comprehensive-platform": "node comprehensive-platform-test.js",
-    "test:openrouter": "node comprehensive-platform-test.js"
+    "test:openrouter": "node comprehensive-platform-test.js",
+    "analyze": "ANALYZE=true npm run build",
+    "analyze:lazy": "ANALYZE=true npm run build && npx webpack-bundle-analyzer .next/static/chunks/*.js"
   },
   "engines": {
     "node": ">=18"
