@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ChatWindow, ChatInput, ChatLayout } from './ChatWindow';
+import { ChatWindow, ChatInput, ChatLayout } from '../components/ChatWindow';
 import { useState } from 'react';
 
 /**

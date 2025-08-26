@@ -9,6 +9,11 @@ const nextConfig = {
       // Enable Turbopack for development (simplified config)
     },
   },
+  // ESLint configuration to ignore Storybook files during build
+  eslint: {
+    ignoreDuringBuilds: false,
+    dirs: ['app', 'components', 'lib', 'utils'],
+  },
   // External packages that should not be bundled by Vercel
   serverExternalPackages: [
     '@langchain/anthropic',
