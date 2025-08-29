@@ -4,10 +4,11 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Use the new turbopack config instead of experimental.turbo
+  turbopack: {
+    // Enable Turbopack for development (simplified config)
+  },
   experimental: {
-    turbo: {
-      // Enable Turbopack for development (simplified config)
-    },
     // Enable lazy loading for better performance
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },

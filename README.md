@@ -65,9 +65,9 @@ Improved retrieval-augmented generation with Supabase:
 ### Prerequisites
 - Node.js 18+
 - Yarn package manager
-- OpenAI API key
+- OpenAI API key (optional for demo mode)
 
-### Installation
+### Quick Local Setup
 
 1. **Clone the repository**
    ```bash
@@ -85,24 +85,63 @@ Improved retrieval-augmented generation with Supabase:
    cp .env.example .env.local
    ```
    
-   Add your API keys to `.env.local`:
+   For local development, you can use demo mode:
+   ```env
+   NEXT_PUBLIC_DEMO="true"
+   LANGCHAIN_CALLBACKS_BACKGROUND=false
+   ```
+   
+   Or add your API keys to `.env.local`:
    ```env
    OPENAI_API_KEY="your_openai_api_key"
-   LANGCHAIN_CALLBACKS_BACKGROUND=false
-   
-   # Optional: For enhanced features
-   SUPABASE_PRIVATE_KEY="your_supabase_private_key"
-   SUPABASE_URL="your_supabase_url"
-   SERPAPI_API_KEY="your_serpapi_key"
+   DEFAULT_LLM_PROVIDER="openai"
    ```
 
-4. **Start development server**
+4. **Test local setup**
+   ```bash
+   yarn test:local-full
+   ```
+
+5. **Start development server**
    ```bash
    yarn dev
    ```
 
-5. **Open the application**
+6. **Open the application**
    Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Local Development Scripts
+
+```bash
+# Quick setup verification
+yarn test:local
+
+# Full local test suite (includes server test)
+yarn test:local-full
+
+# Development server
+yarn dev
+
+# Production build
+yarn build
+
+# Linting
+yarn lint
+```
+
+For complete testing with Playwright:
+```bash
+# Install Playwright browsers (optional)
+yarn test:install
+
+# Run autonomous tests (requires browsers)
+yarn test:autonomous
+
+# Validate test configuration
+yarn validate:autonomous
+```
+
+> 📖 **Detailed Setup Guide**: See [LOCAL_SETUP.md](./LOCAL_SETUP.md) for comprehensive local development instructions.
 
 ## 📚 Usage Guide
 
