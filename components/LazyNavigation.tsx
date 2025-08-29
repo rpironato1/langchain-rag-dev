@@ -26,6 +26,7 @@ const navLinks: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: "🏠" },
   { href: "/llm-providers", label: "LLM Providers", icon: "🤖" },
   { href: "/project-planning", label: "Project Planning", icon: "🎯" },
+  { href: "/cli-orchestrator", label: "CLI Orchestrator", icon: "🤖" },
   { href: "/nextjs-dev", label: "Next.js Dev", icon: "⚛️" },
   { href: "/reactbits", label: "ReactBits", icon: "✨" },
   { href: "/terminal", label: "Terminal", icon: "💻" },
