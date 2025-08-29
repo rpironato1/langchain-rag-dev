@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LangChainStream, StreamingTextResponse } from "ai";
 import { createChatModel, parseProviderConfig } from "@/lib/llm-providers";
+import { globalTaskManager, globalTodoListManager } from "@/lib/orchestration-tools";
 
 export const runtime = "nodejs";
 
@@ -26,22 +27,27 @@ function shouldUseCli(prompt: string, taskType: 'planning' | 'development' | 'an
 } {
   const promptLower = prompt.toLowerCase();
   
-  // Use CLI for complex, large-scale tasks
+  // CLI-first approach: Use CLI for most tasks to minimize API usage
   const cliIndicators = [
-    'create project', 'build application', 'develop system', 'implement feature',
-    'generate code', 'write tests', 'deploy application', 'setup infrastructure',
-    'analyze codebase', 'refactor code', 'optimize performance', 'security audit'
+    'create', 'build', 'develop', 'implement', 'generate', 'write', 'deploy', 
+    'setup', 'analyze', 'refactor', 'optimize', 'plan', 'design', 'review',
+    'component', 'application', 'system', 'feature', 'code', 'test', 'infrastructure',
+    'architecture', 'security', 'performance', 'documentation', 'api', 'database'
   ];
   
-  const shouldUseCli = cliIndicators.some(indicator => promptLower.includes(indicator)) ||
-                      prompt.length > 500 || // Long prompts = complex tasks
-                      taskType === 'development'; // Development tasks prefer CLI
+  // Only use API for very simple questions (< 100 chars and no indicators)
+  const isSimpleQuestion = prompt.length < 100 && 
+                           !cliIndicators.some(indicator => promptLower.includes(indicator)) &&
+                           (promptLower.includes('what is') || promptLower.includes('explain') || 
+                            promptLower.includes('difference between') || promptLower.includes('how to'));
+  
+  const shouldUseCli = !isSimpleQuestion; // Default to CLI for almost everything
   
   // Choose provider based on task type
   const provider: 'claude' | 'gemini' = taskType === 'analysis' ? 'claude' : 'gemini';
   const reason = shouldUseCli 
-    ? `Using ${provider} CLI for complex ${taskType} task`
-    : `Using LangChain API for simple ${taskType} orchestration`;
+    ? `Using ${provider} CLI for ${taskType} task (CLI-first approach)`
+    : `Using LangChain API for simple question`;
   
   return { useCli: shouldUseCli, provider, reason };
 }
@@ -130,10 +136,27 @@ export async function POST(req: NextRequest) {
       const result = await executeCliCommand(command, useBackground);
       
       if (useBackground && result.taskId) {
+        // Create orchestrated task for better tracking
+        const orchestratedTaskId = `orch_${result.taskId}`;
+        const steps = [
+          { id: 'cli_execution', description: `Execute: ${command}` },
+          { id: 'result_processing', description: 'Process CLI results' },
+          { id: 'file_organization', description: 'Organize outputs in planos/ or projetos/' },
+        ];
+        
+        globalTaskManager.createTask(orchestratedTaskId, validTaskType, prompt, steps);
+        globalTodoListManager.addTodo(
+          `CLI Task: ${strategy.provider}`,
+          prompt,
+          'high',
+          orchestratedTaskId
+        );
+
         return NextResponse.json({
           type: 'background_task',
           taskId: result.taskId,
-          message: `Started ${strategy.provider} CLI task in background`,
+          orchestratedTaskId,
+          message: `Started ${strategy.provider} CLI task in background with orchestration`,
           command,
           strategy: strategy.reason,
           pollUrl: `/api/chat/cli-orchestrator`,
@@ -148,12 +171,12 @@ export async function POST(req: NextRequest) {
         });
       }
     } else {
-      // Use LangChain API approach for simple orchestration
-      const { stream, handlers } = LangChainStream();
-      
+      // Use LangChain API approach for simple orchestration - with fallback
       try {
         const llmConfig = parseProviderConfig(body);
         const model = await createChatModel(llmConfig);
+        
+        const { stream, handlers } = LangChainStream();
         
         // Enhanced prompt for orchestration
         const orchestrationPrompt = `You are a project orchestration assistant. Your role is to provide lightweight coordination and planning.
@@ -175,10 +198,29 @@ Provide a helpful response that guides the user on next steps.`;
         return new StreamingTextResponse(stream);
       } catch (error) {
         console.error("LLM orchestration error:", error);
-        return NextResponse.json(
-          { error: "Failed to process request with LLM", details: error instanceof Error ? error.message : 'Unknown error' },
-          { status: 500 }
-        );
+        
+        // Fallback: If API fails, route to CLI anyway for local-first operation
+        const fallbackCommand = CLI_COMMANDS.claude.planning(prompt);
+        const result = await executeCliCommand(fallbackCommand, useBackground);
+        
+        if (useBackground && result.taskId) {
+          return NextResponse.json({
+            type: 'background_task_fallback',
+            taskId: result.taskId,
+            message: `API unavailable - routed to Claude CLI as fallback`,
+            command: fallbackCommand,
+            strategy: `Fallback to CLI due to API error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            pollUrl: `/api/chat/cli-orchestrator`,
+          });
+        } else {
+          return NextResponse.json({
+            type: 'cli_result_fallback',
+            output: result.output,
+            success: result.success,
+            command: fallbackCommand,
+            strategy: `Fallback to CLI due to API error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
+        }
       }
     }
   } catch (error) {
