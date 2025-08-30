@@ -1,192 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ChatOpenAI } from "@langchain/openai";
-import { PromptTemplate } from "@langchain/core/prompts";
 
 // Remove edge runtime for compatibility with dynamic imports and Vercel deployment
 // export const runtime = "edge";
 
-// Component templates and patterns
-const COMPONENT_TEMPLATES = {
-  "button": {
-    description: "A customizable button component with variants",
-    template: `import React from 'react';
-import { cn } from '@/utils/cn';
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+// Available UI components that can be referenced in AI generation
+const AVAILABLE_COMPONENTS = [
+  "Button", "Card", "Input", "Textarea", "Badge", "Dialog", "Drawer", 
+  "Label", "Checkbox", "Select", "Popover"
+];
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-}
-
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
-    return (
-      <button
-        className={cn(
-          'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background',
-          {
-            'bg-primary text-primary-foreground hover:bg-primary/90': variant === 'default',
-            'bg-destructive text-destructive-foreground hover:bg-destructive/90': variant === 'destructive',
-            'border border-input hover:bg-accent hover:text-accent-foreground': variant === 'outline',
-            'bg-secondary text-secondary-foreground hover:bg-secondary/80': variant === 'secondary',
-            'hover:bg-accent hover:text-accent-foreground': variant === 'ghost',
-            'underline-offset-4 hover:underline text-primary': variant === 'link',
-          },
-          {
-            'h-10 py-2 px-4': size === 'default',
-            'h-9 px-3 rounded-md': size === 'sm',
-            'h-11 px-8 rounded-md': size === 'lg',
-            'h-10 w-10': size === 'icon',
-          },
-          className
-        )}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-
-Button.displayName = 'Button';
-
-export { Button };`
-  },
-  "card": {
-    description: "A flexible card component with header, content, and footer",
-    template: `import React from 'react';
-import { cn } from '@/utils/cn';
-
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
-
-const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-sm',
-        className
-      )}
-      {...props}
-    />
-  )
-);
-Card.displayName = 'Card';
-
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex flex-col space-y-1.5 p-6', className)}
-    {...props}
-  />
-));
-CardHeader.displayName = 'CardHeader';
-
-const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      'text-2xl font-semibold leading-none tracking-tight',
-      className
-    )}
-    {...props}
-  />
-));
-CardTitle.displayName = 'CardTitle';
-
-const CardDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-));
-CardDescription.displayName = 'CardDescription';
-
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-));
-CardContent.displayName = 'CardContent';
-
-const CardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex items-center p-6 pt-0', className)}
-    {...props}
-  />
-));
-CardFooter.displayName = 'CardFooter';
-
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };`
-  },
-  "form": {
-    description: "A form component with validation and field management",
-    template: `import React from 'react';
-import { cn } from '@/utils/cn';
-
-interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
-  label?: string;
+// Function to execute CLI command for component generation
+async function generateComponentWithCli(prompt: string, useBackground = false): Promise<{
+  success: boolean;
+  output?: string;
+  taskId?: string;
   error?: string;
-  required?: boolean;
-}
+}> {
+  try {
+    // Enhanced prompt for React component generation via CLI
+    const enhancedPrompt = `Generate a React component using TypeScript, Tailwind CSS, and Shadcn UI patterns.
 
-const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
-  ({ className, label, error, required, children, ...props }, ref) => (
-    <div ref={ref} className={cn('space-y-2', className)} {...props}>
-      {label && (
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-          {label}
-          {required && <span className="text-destructive ml-1">*</span>}
-        </label>
-      )}
-      {children}
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
-    </div>
-  )
-);
-FormField.displayName = 'FormField';
-
-const Input = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ className, type, ...props }, ref) => {
-  return (
-    <input
-      type={type}
-      className={cn(
-        'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-        className
-      )}
-      ref={ref}
-      {...props}
-    />
-  );
-});
-Input.displayName = 'Input';
-
-export { FormField, Input };`
-  }
-};
-
-const REACTBITS_TEMPLATE = `You are an expert React component generator specializing in creating high-quality, reusable components using modern React patterns, TypeScript, Tailwind CSS, and Shadcn UI design principles.
-
-When generating components:
+Requirements:
 - Use TypeScript with proper type definitions
 - Follow React best practices (hooks, composition, accessibility)
 - Apply Tailwind CSS for styling with responsive design
@@ -196,73 +30,148 @@ When generating components:
 - Implement proper error boundaries and loading states
 - Use cn() utility for conditional class names
 - Follow Shadcn UI patterns and design tokens
+- Import existing components from @/components/ui/ when possible
 
-Available templates: {templates}
+Available UI components to import: ${AVAILABLE_COMPONENTS.join(", ")}
 
-User request: {input}
+User request: ${prompt}
 
-Generate a complete, production-ready React component:`;
+Provide the complete React component code in a structured format with proper TypeScript definitions. Output should be ready for production use.`;
 
-export async function GET() {
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/cli-orchestrator`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: enhancedPrompt }],
+        taskType: 'development',
+        useBackground
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.type === 'background_task') {
+      return {
+        success: true,
+        taskId: result.taskId,
+        output: `Component generation started in background. Task ID: ${result.taskId}`
+      };
+    } else if (result.type === 'cli_result') {
+      return {
+        success: result.success,
+        output: result.output
+      };
+    } else {
+      return {
+        success: false,
+        error: 'Unexpected response from CLI orchestrator'
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to execute CLI command: ${error instanceof Error ? error.message : 'Unknown error'}`
+    };
+  }
+}
+
+// Function to poll task status
+async function pollTaskStatus(taskId: string): Promise<any> {
+  try {
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/chat/cli-orchestrator`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pollTaskId: taskId
+      })
+    });
+    
+    return await response.json();
+  } catch (error) {
+    return {
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const taskId = url.searchParams.get('taskId');
+  
+  if (taskId) {
+    // Poll for task status
+    const status = await pollTaskStatus(taskId);
+    return NextResponse.json(status);
+  }
+  
   return NextResponse.json({
-    description: "ReactBits - AI-powered React component generation",
-    templates: Object.keys(COMPONENT_TEMPLATES),
-    templateDetails: Object.entries(COMPONENT_TEMPLATES).map(([name, template]) => ({
-      name,
-      description: template.description
-    })),
-    usage: "POST with { prompt: string, template?: string }"
+    description: "ReactBits - CLI-powered React component generation",
+    availableComponents: AVAILABLE_COMPONENTS,
+    usage: {
+      "POST": "{ prompt: string, useBackground?: boolean }",
+      "GET": "?taskId=<id> to poll task status"
+    },
+    features: [
+      "CLI-first component generation using Claude/Gemini",
+      "Background task execution for complex components",
+      "Minimal API key usage",
+      "Structured output with TypeScript support"
+    ]
   });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { prompt, template } = body;
+    const { prompt, useBackground = false } = body;
     
     if (!prompt) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
     }
     
-    // If a specific template is requested, provide it
-    if (template && COMPONENT_TEMPLATES[template as keyof typeof COMPONENT_TEMPLATES]) {
-      const templateData = COMPONENT_TEMPLATES[template as keyof typeof COMPONENT_TEMPLATES];
-      return NextResponse.json({
-        type: "template",
-        name: template,
-        description: templateData.description,
-        code: templateData.template,
-        timestamp: new Date().toISOString()
-      });
+    // Use CLI orchestrator for component generation
+    const result = await generateComponentWithCli(prompt, useBackground);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: "Failed to generate component", details: result.error },
+        { status: 500 }
+      );
     }
     
-    // Generate custom component using AI
-    const promptTemplate = PromptTemplate.fromTemplate(REACTBITS_TEMPLATE);
-    
-    const model = new ChatOpenAI({
-      temperature: 0.3,
-      model: "gpt-4o-mini",
-    });
-    
-    const chain = promptTemplate.pipe(model);
-    
-    const result = await chain.invoke({
-      templates: Object.keys(COMPONENT_TEMPLATES).join(", "),
-      input: prompt
-    });
-    
-    return NextResponse.json({
-      type: "generated",
-      prompt,
-      code: result.content,
-      timestamp: new Date().toISOString(),
-      suggestions: [
-        "Add prop validation with PropTypes or Zod",
-        "Consider adding unit tests with Jest and React Testing Library",
-        "Add Storybook stories for component documentation",
-        "Implement dark mode support with CSS variables"
-      ]
-    });
+    if (result.taskId) {
+      // Background task started
+      return NextResponse.json({
+        type: "background_task",
+        taskId: result.taskId,
+        message: result.output,
+        prompt,
+        timestamp: new Date().toISOString(),
+        pollUrl: `/api/reactbits?taskId=${result.taskId}`,
+        suggestions: [
+          "Task running in background using CLI tools",
+          "Poll the taskId to get the generated component",
+          "CLI approach minimizes API key usage",
+          "Supports complex component generation without token limits"
+        ]
+      });
+    } else {
+      // Synchronous result
+      return NextResponse.json({
+        type: "generated",
+        prompt,
+        code: result.output,
+        timestamp: new Date().toISOString(),
+        method: "CLI-generated (claude/gemini)",
+        suggestions: [
+          "Generated using CLI tools for optimal performance",
+          "Add prop validation with PropTypes or Zod",
+          "Consider adding unit tests with Jest and React Testing Library",
+          "Add Storybook stories for component documentation"
+        ]
+      });
+    }
     
   } catch (error: any) {
     return NextResponse.json(
