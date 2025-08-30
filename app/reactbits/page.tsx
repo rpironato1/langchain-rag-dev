@@ -6,15 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Sparkles, Code2, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Copy, Sparkles, Code2, Download, Terminal, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface GeneratedComponent {
-  type: "generated";
+  type: "generated" | "background_task";
   prompt?: string;
-  code: string;
+  code?: string;
   suggestions?: string[];
   timestamp: string;
+  taskId?: string;
+  message?: string;
+  pollUrl?: string;
+  method?: string;
+}
+
+interface TaskStatus {
+  taskId: string;
+  status: string;
+  output: string;
+  completed: boolean;
 }
 
 export default function ReactBitsPage() {
@@ -22,6 +34,9 @@ export default function ReactBitsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedComponent, setGeneratedComponent] = useState<GeneratedComponent | null>(null);
   const [availableComponents, setAvailableComponents] = useState<string[]>([]);
+  const [useBackground, setUseBackground] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [taskStatus, setTaskStatus] = useState<TaskStatus | null>(null);
 
   // Fetch available components on mount
   useEffect(() => {
@@ -35,10 +50,65 @@ export default function ReactBitsPage() {
       .catch(error => console.error("Error fetching components:", error));
   }, []);
 
+  // Poll for task status if there's an active background task
+  useEffect(() => {
+    let pollInterval: NodeJS.Timeout;
+    
+    if (activeTaskId && isGenerating) {
+      pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/api/reactbits?taskId=${activeTaskId}`);
+          const status = await response.json();
+          
+          setTaskStatus(status);
+          
+          if (status.completed) {
+            setIsGenerating(false);
+            setActiveTaskId(null);
+            
+            if (status.status === 'completed' && status.output) {
+              // Convert task output to generated component format
+              setGeneratedComponent({
+                type: "generated",
+                prompt,
+                code: status.output,
+                timestamp: new Date().toISOString(),
+                method: "CLI-generated (background task)",
+                suggestions: [
+                  "Generated using CLI tools in background",
+                  "Add prop validation with PropTypes or Zod",
+                  "Consider adding unit tests with Jest and React Testing Library",
+                  "Add Storybook stories for component documentation"
+                ]
+              });
+              toast.success("Background component generation completed!");
+            } else if (status.status === 'failed') {
+              toast.error("Background task failed: " + (status.output || "Unknown error"));
+            }
+            
+            clearInterval(pollInterval);
+          }
+        } catch (error) {
+          console.error("Error polling task status:", error);
+          toast.error("Error checking task status");
+        }
+      }, 2000); // Poll every 2 seconds
+    }
+    
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
+  }, [activeTaskId, isGenerating, prompt]);
+
   const generateComponent = async () => {
     if (!prompt.trim()) return;
 
     setIsGenerating(true);
+    setGeneratedComponent(null);
+    setTaskStatus(null);
+    setActiveTaskId(null);
     
     try {
       const response = await fetch("/api/reactbits", {
@@ -48,34 +118,44 @@ export default function ReactBitsPage() {
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
+          useBackground,
         }),
       });
 
       const result = await response.json();
       
       if (response.ok) {
-        setGeneratedComponent(result);
-        toast.success("Component generated successfully!");
+        if (result.type === "background_task") {
+          // Background task started
+          setActiveTaskId(result.taskId);
+          toast.success("Component generation started in background using CLI tools!");
+          // Keep isGenerating true to show polling status
+        } else {
+          // Synchronous result
+          setGeneratedComponent(result);
+          setIsGenerating(false);
+          toast.success("Component generated successfully using CLI tools!");
+        }
       } else {
         toast.error(result.error || "Failed to generate component");
+        setIsGenerating(false);
       }
     } catch (error) {
       toast.error("Error generating component");
       console.error(error);
-    } finally {
       setIsGenerating(false);
     }
   };
 
   const copyToClipboard = async () => {
-    if (generatedComponent) {
+    if (generatedComponent && generatedComponent.code) {
       await navigator.clipboard.writeText(generatedComponent.code);
       toast.success("Code copied to clipboard!");
     }
   };
 
   const downloadFile = () => {
-    if (generatedComponent) {
+    if (generatedComponent && generatedComponent.code) {
       const blob = new Blob([generatedComponent.code], { type: "text/typescript" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -95,11 +175,11 @@ export default function ReactBitsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              ReactBits - Component Generator
+              <Terminal className="h-5 w-5" />
+              ReactBits - CLI-Powered Component Generator
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Generate React components with TypeScript, Tailwind CSS, and Shadcn UI patterns
+              Generate React components using CLI tools (Claude/Gemini) with minimal API usage
             </p>
           </CardHeader>
           <CardContent>
@@ -134,20 +214,58 @@ export default function ReactBitsPage() {
                 </div>
               )}
 
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="background-task" 
+                  checked={useBackground}
+                  onCheckedChange={(checked) => setUseBackground(checked as boolean)}
+                />
+                <label htmlFor="background-task" className="text-sm font-medium">
+                  Use background task execution (recommended for complex components)
+                </label>
+              </div>
+
+              {activeTaskId && isGenerating && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="h-4 w-4 text-blue-600 animate-pulse" />
+                    <span className="text-sm font-medium text-blue-800">
+                      Background Task Running
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-600">
+                    Task ID: {activeTaskId}
+                  </p>
+                  {taskStatus && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Status: {taskStatus.status} 
+                      {taskStatus.output && ` - ${taskStatus.output.slice(0, 100)}...`}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Button
                 onClick={generateComponent}
                 disabled={!prompt.trim() || isGenerating}
                 className="w-full"
               >
                 {isGenerating ? (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                    Generating Component...
-                  </>
+                  activeTaskId ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-pulse" />
+                      Background Task Running...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+                      Starting Generation...
+                    </>
+                  )
                 ) : (
                   <>
-                    <Code2 className="h-4 w-4 mr-2" />
-                    Generate Component
+                    <Terminal className="h-4 w-4 mr-2" />
+                    Generate Component {useBackground ? "(Background)" : "(Sync)"}
                   </>
                 )}
               </Button>
@@ -155,7 +273,7 @@ export default function ReactBitsPage() {
           </CardContent>
         </Card>
 
-        {generatedComponent && (
+        {generatedComponent && generatedComponent.code && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -163,7 +281,7 @@ export default function ReactBitsPage() {
                   <Code2 className="h-5 w-5" />
                   Generated Component
                   <Badge variant="default">
-                    generated
+                    {generatedComponent.method || "CLI-generated"}
                   </Badge>
                 </CardTitle>
                 <div className="flex gap-2">
@@ -201,6 +319,9 @@ export default function ReactBitsPage() {
 
                 <div className="text-xs text-muted-foreground">
                   Generated: {new Date(generatedComponent.timestamp).toLocaleString()}
+                  {generatedComponent.method && (
+                    <span className="ml-2">• Method: {generatedComponent.method}</span>
+                  )}
                 </div>
               </div>
             </CardContent>
