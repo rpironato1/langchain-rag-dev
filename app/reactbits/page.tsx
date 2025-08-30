@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,26 +10,30 @@ import { Copy, Sparkles, Code2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 interface GeneratedComponent {
-  type: "template" | "generated";
-  name?: string;
+  type: "generated";
   prompt?: string;
   code: string;
-  description?: string;
   suggestions?: string[];
   timestamp: string;
 }
 
 export default function ReactBitsPage() {
   const [prompt, setPrompt] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedComponent, setGeneratedComponent] = useState<GeneratedComponent | null>(null);
+  const [availableComponents, setAvailableComponents] = useState<string[]>([]);
 
-  const templates = [
-    { name: "button", description: "A customizable button component with variants" },
-    { name: "card", description: "A flexible card component with header, content, and footer" },
-    { name: "form", description: "A form component with validation and field management" },
-  ];
+  // Fetch available components on mount
+  useEffect(() => {
+    fetch("/api/reactbits")
+      .then(res => res.json())
+      .then(data => {
+        if (data.availableComponents) {
+          setAvailableComponents(data.availableComponents);
+        }
+      })
+      .catch(error => console.error("Error fetching components:", error));
+  }, []);
 
   const generateComponent = async () => {
     if (!prompt.trim()) return;
@@ -44,7 +48,6 @@ export default function ReactBitsPage() {
         },
         body: JSON.stringify({
           prompt: prompt.trim(),
-          template: selectedTemplate || undefined,
         }),
       });
 
@@ -77,7 +80,7 @@ export default function ReactBitsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${generatedComponent.name || "Component"}.tsx`;
+      a.download = `Component.tsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -113,35 +116,23 @@ export default function ReactBitsPage() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Template (Optional)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={selectedTemplate === "" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedTemplate("")}
-                  >
-                    Custom
-                  </Button>
-                  {templates.map((template) => (
-                    <Button
-                      key={template.name}
-                      variant={selectedTemplate === template.name ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedTemplate(template.name)}
-                    >
-                      {template.name}
-                    </Button>
-                  ))}
-                </div>
-                {selectedTemplate && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {templates.find(t => t.name === selectedTemplate)?.description}
+              {availableComponents.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Available UI Components
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    You can reference these existing components in your prompt:
                   </p>
-                )}
-              </div>
+                  <div className="flex flex-wrap gap-1">
+                    {availableComponents.map((component) => (
+                      <Badge key={component} variant="secondary" className="text-xs">
+                        {component}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <Button
                 onClick={generateComponent}
@@ -171,8 +162,8 @@ export default function ReactBitsPage() {
                 <CardTitle className="flex items-center gap-2">
                   <Code2 className="h-5 w-5" />
                   Generated Component
-                  <Badge variant={generatedComponent.type === "template" ? "secondary" : "default"}>
-                    {generatedComponent.type}
+                  <Badge variant="default">
+                    generated
                   </Badge>
                 </CardTitle>
                 <div className="flex gap-2">
@@ -186,11 +177,6 @@ export default function ReactBitsPage() {
                   </Button>
                 </div>
               </div>
-              {generatedComponent.description && (
-                <p className="text-sm text-muted-foreground">
-                  {generatedComponent.description}
-                </p>
-              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -220,36 +206,6 @@ export default function ReactBitsPage() {
             </CardContent>
           </Card>
         )}
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Template Library</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {templates.map((template) => (
-                <div
-                  key={template.name}
-                  className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50"
-                  onClick={() => {
-                    setSelectedTemplate(template.name);
-                    setPrompt(`Generate the ${template.name} template`);
-                  }}
-                >
-                  <div>
-                    <code className="text-sm font-mono">{template.name}</code>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {template.description}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Use Template
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
